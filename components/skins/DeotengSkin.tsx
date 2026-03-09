@@ -18,6 +18,7 @@ interface SkinProps {
   features: any[];
   versions: any[];
   feedbacks: any[];
+  auditLogs: any[];
   selectedFeature: string | null;
   setSelectedFeature: (id: string | null) => void;
   feedbackText: string;
@@ -25,19 +26,22 @@ interface SkinProps {
   uploading: boolean;
   onUploadImage: (e: React.ChangeEvent<HTMLInputElement>, id: string) => void;
   onSendFeedback: (id: string) => void;
+  onUpdateStatus: (id: string, status: string) => void;
 }
 
 const DeotengSkin: React.FC<SkinProps> = ({
   features,
   versions,
   feedbacks,
+  auditLogs,
   selectedFeature,
   setSelectedFeature,
   feedbackText,
   setFeedbackText,
   uploading,
   onUploadImage,
-  onSendFeedback
+  onSendFeedback,
+  onUpdateStatus
 }) => {
   return (
     <div className="min-h-screen bg-[#0a0a05] text-[#d4af37] font-sans selection:bg-[#d4af37] selection:text-black">
@@ -58,19 +62,19 @@ const DeotengSkin: React.FC<SkinProps> = ({
               <h1 className="text-2xl font-bold tracking-tight text-white">DEOTENG</h1>
               <div className="flex items-center gap-2 text-[10px] font-mono text-[#d4af37]">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                ROYAL PROTOCOL ACTIVE
+                皇家協議已啟動
               </div>
             </div>
           </div>
           
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#" className="text-white hover:text-[#d4af37] transition-colors">DOMAIN</a>
-            <a href="#" className="hover:text-white transition-colors">INTELLIGENCE</a>
-            <a href="#" className="hover:text-white transition-colors">ASSETS</a>
+            <a href="#" className="text-white hover:text-[#d4af37] transition-colors">領域</a>
+            <a href="#" className="hover:text-white transition-colors">情報</a>
+            <a href="#" className="hover:text-white transition-colors">資產</a>
             <div className="h-4 w-px bg-white/10" />
             <div className="flex items-center gap-2 px-4 py-2 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-lg">
               <Zap size={14} />
-              <span className="text-xs">GOLD TIER</span>
+              <span className="text-xs">黃金階級</span>
             </div>
           </nav>
         </div>
@@ -85,10 +89,10 @@ const DeotengSkin: React.FC<SkinProps> = ({
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <Activity size={20} className="text-[#d4af37]" />
-                  <h2 className="text-xl font-bold text-white uppercase tracking-wider">Mission Matrix</h2>
+                  <h2 className="text-xl font-bold text-white uppercase tracking-wider">任務矩陣</h2>
                 </div>
                 <div className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-mono border border-white/10">
-                  {features.length} ACTIVE NODES
+                  {features.length} 活躍節點
                 </div>
               </div>
 
@@ -104,15 +108,28 @@ const DeotengSkin: React.FC<SkinProps> = ({
                     }`}
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="text-lg font-semibold text-white group-hover:text-[#d4af37] transition-colors flex items-center gap-2">
-                          {feature.title}
-                          {feature.status === 'done' && <Shield size={14} className="text-green-500" />}
+                          {feature.name}
+                          {feature.status === '已發佈' && <Shield size={14} className="text-green-500" />}
                         </h3>
-                        <p className="text-sm text-zinc-400 mt-1 line-clamp-2">{feature.description}</p>
+                        <div className="flex gap-4 mt-1 items-start">
+                          <p className="text-sm text-zinc-400 line-clamp-2 flex-1">{feature.description}</p>
+                          <div className="flex gap-1 shrink-0">
+                            {['待處理', '開發中', '待審核', '已發佈'].map(s => (
+                              <button 
+                                key={s}
+                                onClick={(e) => { e.stopPropagation(); onUpdateStatus(feature.id, s); }}
+                                className={`text-[9px] px-2 py-0.5 rounded border transition-all ${feature.status === s ? 'bg-[#d4af37] border-[#d4af37] text-black font-bold' : 'border-[#d4af37]/20 text-[#d4af37]/40 hover:border-[#d4af37]'}`}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-tighter ${
-                        feature.status === 'done' ? 'bg-green-500/10 text-green-500' : 'bg-[#d4af37]/10 text-[#d4af37]'
+                      <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-tighter shrink-0 ml-4 ${
+                        feature.status === '已發佈' ? 'bg-green-500/10 text-green-500' : 'bg-[#d4af37]/10 text-[#d4af37]'
                       }`}>
                         {feature.status}
                       </div>
@@ -123,7 +140,7 @@ const DeotengSkin: React.FC<SkinProps> = ({
                         {/* Feedbacks */}
                         <div className="space-y-4">
                           <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-                            <MessageSquare size={12} /> Communication Logs
+                            <MessageSquare size={12} /> 通訊日誌
                           </h4>
                           <div className="space-y-3">
                             {feedbacks.filter(f => f.feature_id === feature.id).map((f) => (
@@ -146,20 +163,20 @@ const DeotengSkin: React.FC<SkinProps> = ({
                           <textarea 
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Input command..."
+                            placeholder="輸入指令..."
                             className="bg-black/60 border border-white/10 rounded-xl p-4 text-sm focus:outline-none focus:border-[#d4af37] transition-colors resize-none h-24"
                           />
                           <div className="flex justify-between items-center">
                             <label className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg cursor-pointer hover:bg-white/10 transition-colors text-xs">
                               <Upload size={14} />
-                              {uploading ? 'UPLOADING...' : 'ATTACH MEDIA'}
+                              {uploading ? '上傳中...' : '夾帶媒體'}
                               <input type="file" className="hidden" onChange={(e) => onUploadImage(e, feature.id)} disabled={uploading} />
                             </label>
                             <button 
                               onClick={() => onSendFeedback(feature.id)}
                               className="px-6 py-2 bg-[#d4af37] text-black font-bold rounded-lg hover:bg-white transition-all text-xs"
                             >
-                              EXECUTE
+                              執行
                             </button>
                           </div>
                         </div>
@@ -177,7 +194,7 @@ const DeotengSkin: React.FC<SkinProps> = ({
               <div className="absolute top-0 right-0 w-24 h-24 bg-[#d4af37]/10 blur-[40px] rounded-full" />
               <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
                 <Clock size={20} className="text-[#d4af37]" />
-                <h2 className="text-xl font-bold text-white uppercase tracking-wider">Evolution Log</h2>
+                <h2 className="text-xl font-bold text-white uppercase tracking-wider">進化日誌</h2>
               </div>
               <div className="space-y-6">
                 {versions.map((v, i) => (
@@ -193,6 +210,22 @@ const DeotengSkin: React.FC<SkinProps> = ({
                       <span className="text-[10px] text-zinc-500 font-mono">{new Date(v.created_at).toLocaleDateString()}</span>
                     </div>
                     <p className="text-xs text-zinc-400 line-clamp-2">{v.release_notes}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="bg-gradient-to-br from-[#d4af37]/10 to-transparent border border-[#d4af37]/20 rounded-3xl p-8">
+              <Shield className="text-[#d4af37] mb-4" size={32} />
+              <h3 className="text-lg font-bold text-white mb-4">審計日誌</h3>
+              <div className="space-y-4 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#d4af37]/20">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="text-[10px] border-b border-[#d4af37]/10 pb-2">
+                    <div className="flex justify-between font-bold text-[#d4af37] mb-1">
+                      <span>{log.author}</span>
+                      <span className="font-mono">{new Date(log.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="text-zinc-400">{log.action}: {log.comment}</div>
                   </div>
                 ))}
               </div>

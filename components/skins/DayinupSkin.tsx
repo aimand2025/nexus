@@ -17,6 +17,7 @@ type SkinProps = {
   features: any[];
   versions: any[];
   feedbacks: any[];
+  auditLogs: any[];
   selectedFeature: string | null;
   setSelectedFeature: (id: string | null) => void;
   feedbackText: string;
@@ -24,19 +25,22 @@ type SkinProps = {
   uploading: boolean;
   onUploadImage: (e: React.ChangeEvent<HTMLInputElement>, id: string) => void;
   onSendFeedback: (id: string) => void;
+  onUpdateStatus: (id: string, status: string) => void;
 };
 
 export default function DayinupSkin({
   features,
   versions,
   feedbacks,
+  auditLogs,
   selectedFeature,
   setSelectedFeature,
   feedbackText,
   setFeedbackText,
   uploading,
   onUploadImage,
-  onSendFeedback
+  onSendFeedback,
+  onUpdateStatus
 }: SkinProps) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 font-sans">
@@ -44,11 +48,11 @@ export default function DayinupSkin({
       <header className="h-24 bg-[#111] border-b border-orange-500/20 px-12 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center font-black text-white italic">D</div>
-          <h1 className="text-2xl font-black tracking-tighter text-white uppercase">DayinUP Hub</h1>
+          <h1 className="text-2xl font-black tracking-tighter text-white uppercase">DayinUP 控制台</h1>
         </div>
         <div className="flex items-center gap-4 bg-orange-500/10 px-4 py-2 rounded-full border border-orange-500/20">
           <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">Core Active</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">核心啟動</span>
         </div>
       </header>
 
@@ -56,8 +60,8 @@ export default function DayinupSkin({
         {/* Left Column: Progress */}
         <div className="lg:col-span-8 space-y-8">
           <div className="flex items-center gap-3 border-l-4 border-orange-600 pl-4">
-            <h2 className="text-xl font-bold text-white uppercase tracking-tight">Project Evolution</h2>
-            <span className="text-sm text-zinc-600 font-mono">[{features.length} Nodes]</span>
+            <h2 className="text-xl font-bold text-white uppercase tracking-tight">項目進化</h2>
+            <span className="text-sm text-zinc-600 font-mono">[{features.length} 節點]</span>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
@@ -73,7 +77,20 @@ export default function DayinupSkin({
                   <div className="flex items-start justify-between mb-4">
                     <div className="space-y-1">
                       <h3 className="text-lg font-bold text-white">{item.name}</h3>
-                      <p className="text-sm text-zinc-500 max-w-xl">{item.description}</p>
+                      <div className="flex gap-2 items-center">
+                        <p className="text-sm text-zinc-500 max-w-xl">{item.description}</p>
+                        <div className="flex gap-1">
+                          {['待處理', '開發中', '待審核', '已發佈'].map(s => (
+                            <button 
+                              key={s}
+                              onClick={(e) => { e.stopPropagation(); onUpdateStatus(item.id, s); }}
+                              className={`text-[8px] px-2 py-0.5 rounded-full border transition-colors ${item.status === s ? 'bg-orange-600 border-orange-600 text-white' : 'border-white/10 text-zinc-600 hover:border-orange-500'}`}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     <div className="px-3 py-1 bg-zinc-800 rounded-lg text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
                       {item.status}
@@ -115,7 +132,7 @@ export default function DayinupSkin({
                         <div className="flex gap-3 items-center bg-zinc-800/30 p-2 rounded-2xl border border-white/5">
                           <input 
                             type="text" 
-                            placeholder="Type a message..." 
+                            placeholder="輸入訊息..." 
                             className="flex-1 bg-transparent px-4 py-2 text-sm focus:outline-none"
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
@@ -138,7 +155,7 @@ export default function DayinupSkin({
         {/* Right Column: Versions */}
         <div className="lg:col-span-4 space-y-8">
           <div className="flex items-center gap-3 border-l-4 border-zinc-700 pl-4">
-            <h2 className="text-xl font-bold text-white uppercase tracking-tight">Timeline</h2>
+            <h2 className="text-xl font-bold text-white uppercase tracking-tight">時間線</h2>
           </div>
           
           <div className="space-y-6">
@@ -148,6 +165,23 @@ export default function DayinupSkin({
                 <div className="text-[10px] font-mono text-zinc-600 mb-1">{new Date(v.created_at).toDateString()}</div>
                 <div className="text-sm font-bold text-white mb-2">{v.version_tag}</div>
                 <p className="text-xs text-zinc-500 leading-relaxed bg-zinc-900/30 p-3 rounded-xl border border-white/5">{v.change_summary}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 border-l-4 border-orange-600 pl-4 mt-12">
+            <h2 className="text-xl font-bold text-white uppercase tracking-tight">審計日誌</h2>
+          </div>
+          <div className="space-y-4">
+            {auditLogs.map((log) => (
+              <div key={log.id} className="p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-[10px]">
+                <div className="flex justify-between mb-1">
+                  <span className="font-bold text-orange-500">{log.author}</span>
+                  <span className="text-zinc-600 font-mono">{new Date(log.created_at).toLocaleTimeString()}</span>
+                </div>
+                <div className="text-zinc-400">
+                  {log.action} : {log.comment}
+                </div>
               </div>
             ))}
           </div>

@@ -20,6 +20,7 @@ type SkinProps = {
   features: any[];
   versions: any[];
   feedbacks: any[];
+  auditLogs: any[];
   selectedFeature: string | null;
   setSelectedFeature: (id: string | null) => void;
   feedbackText: string;
@@ -27,25 +28,28 @@ type SkinProps = {
   uploading: boolean;
   onUploadImage: (e: React.ChangeEvent<HTMLInputElement>, id: string) => void;
   onSendFeedback: (id: string) => void;
+  onUpdateStatus: (id: string, status: string) => void;
 };
 
 export default function PiktagSkin({
   features,
   versions,
   feedbacks,
+  auditLogs,
   selectedFeature,
   setSelectedFeature,
   feedbackText,
   setFeedbackText,
   uploading,
   onUploadImage,
-  onSendFeedback
+  onSendFeedback,
+  onUpdateStatus
 }: SkinProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Live': return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
-      case 'In Progress': return <Clock className="w-5 h-5 text-amber-500" />;
-      case 'Review': return <ShieldAlert className="w-5 h-5 text-blue-500" />;
+      case '已發佈': return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
+      case '開發中': return <Clock className="w-5 h-5 text-amber-500" />;
+      case '待審核': return <ShieldAlert className="w-5 h-5 text-blue-500" />;
       default: return <Circle className="w-5 h-5 text-zinc-400" />;
     }
   };
@@ -62,11 +66,15 @@ export default function PiktagSkin({
           <nav className="space-y-2">
             <button className="flex items-center gap-3 w-full p-3 rounded-xl bg-white/5 text-white transition-all text-sm font-medium">
               <LayoutDashboard className="w-4 h-4" />
-              <span>Mission Control</span>
+              <span>任務中心</span>
             </button>
             <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 text-zinc-400 hover:text-white transition-all text-sm font-medium">
               <GitBranch className="w-4 h-4" />
-              <span>Version Sentinel</span>
+              <span>版本前哨</span>
+            </button>
+            <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 text-zinc-400 hover:text-white transition-all text-sm font-medium">
+              <Users className="w-4 h-4" />
+              <span>審計日誌</span>
             </button>
           </nav>
         </div>
@@ -75,11 +83,11 @@ export default function PiktagSkin({
       {/* Main Content */}
       <main className="lg:pl-64 min-h-screen">
         <header className="sticky top-0 z-30 h-20 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md px-8 flex items-center justify-between">
-          <h2 className="text-sm font-bold tracking-widest uppercase text-zinc-400">Commander&apos;s Dashboard</h2>
+          <h2 className="text-sm font-bold tracking-widest uppercase text-zinc-400">指揮官儀表板</h2>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-xs font-medium text-indigo-500/80">PIKTAG MODE</span>
+              <span className="text-xs font-medium text-indigo-500/80">PIKTAG 模式</span>
             </div>
           </div>
         </header>
@@ -88,7 +96,7 @@ export default function PiktagSkin({
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
             {/* Feature List */}
             <div className="xl:col-span-2 space-y-6">
-              <h3 className="text-lg font-bold text-white tracking-tight uppercase">Feature Matrix</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight uppercase">功能矩陣</h3>
               <div className="grid gap-4">
                 {features.map((feature, idx) => (
                   <motion.div 
@@ -105,7 +113,20 @@ export default function PiktagSkin({
                         </div>
                         <div>
                           <h4 className="font-semibold text-white">{feature.name}</h4>
-                          <p className="text-xs text-zinc-500">{feature.description}</p>
+                          <div className="flex gap-2 mt-1">
+                            <p className="text-xs text-zinc-500">{feature.description}</p>
+                            <div className="flex gap-1">
+                              {['待處理', '開發中', '待審核', '已發佈'].map(s => (
+                                <button 
+                                  key={s}
+                                  onClick={(e) => { e.stopPropagation(); onUpdateStatus(feature.id, s); }}
+                                  className={`text-[8px] px-1.5 py-0.5 rounded border ${feature.status === s ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'border-white/10 text-zinc-600'}`}
+                                >
+                                  {s}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-8">
@@ -142,7 +163,7 @@ export default function PiktagSkin({
                           <div className="flex items-center gap-3">
                             <input 
                               type="text" 
-                              placeholder="Add report..." 
+                              placeholder="新增回報..." 
                               className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-indigo-500/50"
                               value={feedbackText}
                               onChange={(e) => setFeedbackText(e.target.value)}
@@ -161,19 +182,38 @@ export default function PiktagSkin({
               </div>
             </div>
 
-            {/* Versions */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-bold text-white tracking-tight uppercase">Version Sentinel</h3>
-              <div className="space-y-4">
-                {versions.map((version) => (
-                  <div key={version.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
-                    <div className="flex justify-between text-[10px] mb-2 font-mono uppercase tracking-widest text-indigo-400">
-                      <span>{version.version_tag}</span>
-                      <span className="text-zinc-600">#{version.commit_hash?.slice(0, 7)}</span>
+            {/* Versions & Audit */}
+            <div className="space-y-12">
+              <div className="space-y-6">
+                <h3 className="text-lg font-bold text-white tracking-tight uppercase">版本前哨</h3>
+                <div className="space-y-4">
+                  {versions.map((version) => (
+                    <div key={version.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
+                      <div className="flex justify-between text-[10px] mb-2 font-mono uppercase tracking-widest text-indigo-400">
+                        <span>{version.version_tag}</span>
+                        <span className="text-zinc-600">#{version.commit_hash?.slice(0, 7)}</span>
+                      </div>
+                      <p className="text-xs text-zinc-300">{version.change_summary}</p>
                     </div>
-                    <p className="text-xs text-zinc-300">{version.change_summary}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-lg font-bold text-white tracking-tight uppercase">審計日誌</h3>
+                <div className="space-y-3">
+                  {auditLogs.map((log) => (
+                    <div key={log.id} className="text-[10px] flex gap-3 items-start">
+                      <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 mt-1 shrink-0" />
+                      <div>
+                        <span className="text-indigo-400 font-bold">{log.author}</span>
+                        <span className="text-zinc-500 mx-1">{log.action}</span>
+                        <span className="text-zinc-300">{log.comment}</span>
+                        <div className="text-[8px] text-zinc-600 font-mono">{new Date(log.created_at).toLocaleTimeString()}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

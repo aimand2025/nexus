@@ -18,6 +18,7 @@ interface SkinProps {
   features: any[];
   versions: any[];
   feedbacks: any[];
+  auditLogs: any[];
   selectedFeature: string | null;
   setSelectedFeature: (id: string | null) => void;
   feedbackText: string;
@@ -25,19 +26,22 @@ interface SkinProps {
   uploading: boolean;
   onUploadImage: (e: React.ChangeEvent<HTMLInputElement>, id: string) => void;
   onSendFeedback: (id: string) => void;
+  onUpdateStatus: (id: string, status: string) => void;
 }
 
 const GathertaiwanSkin: React.FC<SkinProps> = ({
   features,
   versions,
   feedbacks,
+  auditLogs,
   selectedFeature,
   setSelectedFeature,
   feedbackText,
   setFeedbackText,
   uploading,
   onUploadImage,
-  onSendFeedback
+  onSendFeedback,
+  onUpdateStatus
 }) => {
   return (
     <div className="min-h-screen bg-[#f0f9f6] text-[#1a4d3e] font-sans selection:bg-[#2dd4bf] selection:text-white">
@@ -58,19 +62,19 @@ const GathertaiwanSkin: React.FC<SkinProps> = ({
               <h1 className="text-2xl font-black tracking-tight text-[#0f342a]">GatherTaiwan</h1>
               <div className="flex items-center gap-2 text-[10px] font-bold text-teal-600 uppercase tracking-widest">
                 <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
-                Community Pulse Active
+                社區脈動已啟動
               </div>
             </div>
           </div>
           
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold">
-            <a href="#" className="text-teal-900 hover:text-teal-600 transition-colors">ISLAND</a>
-            <a href="#" className="hover:text-teal-600 transition-colors">VIBES</a>
-            <a href="#" className="hover:text-teal-600 transition-colors">PEOPLE</a>
+            <a href="#" className="text-teal-900 hover:text-teal-600 transition-colors">島嶼</a>
+            <a href="#" className="hover:text-teal-600 transition-colors">氛圍</a>
+            <a href="#" className="hover:text-teal-600 transition-colors">夥伴</a>
             <div className="h-4 w-px bg-teal-900/10" />
             <button className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-full hover:bg-teal-700 transition-all shadow-md shadow-teal-600/20 active:scale-95">
               <Sprout size={16} />
-              <span>GATHER NOW</span>
+              <span>立即集結</span>
             </button>
           </nav>
         </div>
@@ -87,10 +91,10 @@ const GathertaiwanSkin: React.FC<SkinProps> = ({
                   <div className="p-2 bg-teal-50 rounded-xl">
                     <Compass size={24} className="text-teal-600" />
                   </div>
-                  <h2 className="text-2xl font-black text-[#0f342a] tracking-tight">Village Matrix</h2>
+                  <h2 className="text-2xl font-black text-[#0f342a] tracking-tight">部落矩陣</h2>
                 </div>
                 <div className="px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-xs font-bold border border-teal-100">
-                  {features.length} ACTIVE NODES
+                  {features.length} 活躍節點
                 </div>
               </div>
 
@@ -109,14 +113,27 @@ const GathertaiwanSkin: React.FC<SkinProps> = ({
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-xl font-bold text-[#0f342a]">
-                            {feature.title}
+                            {feature.name}
                           </h3>
-                          {feature.status === 'done' && <div className="p-1 bg-green-100 rounded-full"><Heart size={12} className="text-green-600 fill-green-600" /></div>}
+                          {feature.status === '已發佈' && <div className="p-1 bg-green-100 rounded-full"><Heart size={12} className="text-green-600 fill-green-600" /></div>}
                         </div>
-                        <p className="text-teal-800/70 leading-relaxed">{feature.description}</p>
+                        <div className="flex gap-4 items-start">
+                          <p className="text-teal-800/70 leading-relaxed flex-1">{feature.description}</p>
+                          <div className="flex gap-1 shrink-0">
+                            {['待處理', '開發中', '待審核', '已發佈'].map(s => (
+                              <button 
+                                key={s}
+                                onClick={(e) => { e.stopPropagation(); onUpdateStatus(feature.id, s); }}
+                                className={`text-[9px] px-3 py-1 rounded-full border transition-all ${feature.status === s ? 'bg-teal-600 border-teal-600 text-white font-bold' : 'border-teal-100 text-teal-300 hover:border-teal-400'}`}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                        feature.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700'
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 ml-4 ${
+                        feature.status === '已發佈' ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700'
                       }`}>
                         {feature.status}
                       </div>
@@ -129,7 +146,7 @@ const GathertaiwanSkin: React.FC<SkinProps> = ({
                         {/* Feedbacks */}
                         <div className="space-y-4">
                           <h4 className="text-xs font-black uppercase tracking-[0.2em] text-teal-900/40 flex items-center gap-2">
-                            <MessageSquare size={14} /> Community Echo
+                            <MessageSquare size={14} /> 社區迴聲
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {feedbacks.filter(f => f.feature_id === feature.id).map((f) => (
@@ -154,20 +171,20 @@ const GathertaiwanSkin: React.FC<SkinProps> = ({
                           <textarea 
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Share your thoughts with the tribe..."
+                            placeholder="分享你的想法給部落..."
                             className="w-full bg-transparent border-none p-0 text-teal-900 placeholder:text-teal-900/30 text-sm focus:ring-0 resize-none h-20 font-medium"
                           />
                           <div className="flex justify-between items-center mt-4">
                             <label className="flex items-center gap-2 px-4 py-2 bg-white text-teal-700 rounded-full cursor-pointer hover:shadow-md transition-all text-xs font-bold border border-teal-100">
                               <Upload size={14} />
-                              {uploading ? 'SHARING...' : 'UPLOAD SNAP'}
+                              {uploading ? '分享中...' : '上傳快照'}
                               <input type="file" className="hidden" onChange={(e) => onUploadImage(e, feature.id)} disabled={uploading} />
                             </label>
                             <button 
                               onClick={() => onSendFeedback(feature.id)}
                               className="px-8 py-2.5 bg-teal-600 text-white font-black rounded-full hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 text-xs uppercase tracking-widest"
                             >
-                              PUBLISH
+                              發佈
                             </button>
                           </div>
                         </div>
@@ -186,7 +203,7 @@ const GathertaiwanSkin: React.FC<SkinProps> = ({
                 <div className="p-2 bg-teal-50 rounded-xl">
                   <Calendar size={20} className="text-teal-600" />
                 </div>
-                <h2 className="text-xl font-black text-[#0f342a] tracking-tight uppercase">Legacy Timeline</h2>
+                <h2 className="text-xl font-black text-[#0f342a] tracking-tight uppercase">傳承時間線</h2>
               </div>
               <div className="space-y-8">
                 {versions.map((v, i) => (
@@ -199,6 +216,26 @@ const GathertaiwanSkin: React.FC<SkinProps> = ({
                       <span className="text-sm font-black text-teal-900">Island v{v.version_number}</span>
                     </div>
                     <p className="text-xs text-teal-800/60 font-medium leading-relaxed">{v.release_notes}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-teal-100/50">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-teal-50 rounded-xl">
+                  <Sprout size={20} className="text-teal-600" />
+                </div>
+                <h2 className="text-xl font-black text-[#0f342a] tracking-tight uppercase">審計日誌</h2>
+              </div>
+              <div className="space-y-4 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-teal-100">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="text-[10px] bg-teal-50/30 p-3 rounded-2xl border border-teal-50">
+                    <div className="flex justify-between font-black text-teal-700 mb-1">
+                      <span>@{log.author}</span>
+                      <span className="text-teal-300">{new Date(log.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="text-teal-900/60 font-medium">{log.action}: {log.comment}</div>
                   </div>
                 ))}
               </div>
